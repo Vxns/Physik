@@ -5,7 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Physik – Karteikarten</title>
 <style>
-  :root { --bg:#0b0f14; --panel:#121826; --muted:#a9b4c0; --text:#e6edf3; --accent:#6ea8fe; --ok:#2fbf71; --bad:#ff5c5c; --border: rgba(255,255,255,0.12); }
+  :root {
+    --bg:#0b0f14; --panel:#121826; --muted:#a9b4c0; --text:#e6edf3;
+    --accent:#6ea8fe; --ok:#2fbf71; --bad:#ff5c5c; --border: rgba(255,255,255,0.12);
+  }
   body{ margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; background:var(--bg); color:var(--text); }
   .wrap{ max-width:1100px; margin:0 auto; padding:18px; }
   .top{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between; margin-bottom:14px; }
@@ -16,28 +19,56 @@
   button:hover{ border-color: rgba(255,255,255,0.25); }
   input{ width:260px; }
   .stats{ color:var(--muted); font-size:13px; }
+
   .grid{ display:grid; grid-template-columns: 1fr; gap:12px; }
+
   .card{ background:var(--panel); border:1px solid var(--border); border-radius:16px; overflow:hidden; }
-  .cardHeader{ display:flex; justify-content:space-between; align-items:center; padding:10px 12px; border-bottom:1px solid var(--border); color:var(--muted); font-size:13px; }
-  .flipHint{ color:var(--muted); }
-  .face{ padding:16px; line-height:1.45; font-size:16px; }
-  .face h2{ margin:0 0 10px 0; font-size:14px; color:var(--muted); font-weight:600; }
-  .faceText{ white-space:pre-wrap; }
+  .cardHeader{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:10px 12px; border-bottom:1px solid var(--border); color:var(--muted); font-size:13px;
+  }
+
+  /* NEW: Split layout like your PDF: left=question, right=answer */
+  .split{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap:0;
+  }
+  .pane{
+    padding:16px; line-height:1.45; font-size:16px;
+    min-height: 260px;
+  }
+  .pane + .pane{ border-left:1px solid var(--border); }
+  .pane h2{ margin:0 0 10px 0; font-size:14px; color:var(--muted); font-weight:600; }
+  .paneText{ white-space:pre-wrap; }
+
+  .answerPlaceholder{
+    color: var(--muted);
+    border: 1px dashed rgba(255,255,255,0.18);
+    border-radius: 12px;
+    padding: 12px;
+  }
+
   .actions{ display:flex; flex-wrap:wrap; gap:10px; padding:12px; border-top:1px solid var(--border); }
   .pill{ border-radius:999px; padding:8px 12px; border:1px solid var(--border); background:transparent; }
   .pill.primary{ background:rgba(110,168,254,0.12); border-color:rgba(110,168,254,0.35); }
   .pill.ok{ background:rgba(47,191,113,0.14); border-color:rgba(47,191,113,0.4); }
   .pill.bad{ background:rgba(255,92,92,0.14); border-color:rgba(255,92,92,0.4); }
+
   .footer{ margin-top:12px; color:var(--muted); font-size:13px; }
   .k{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size:12px; color:var(--muted); }
-  @media (min-width: 900px){ .grid{ grid-template-columns: 1fr; } }
+
+  @media (max-width: 900px){
+    .split{ grid-template-columns: 1fr; }
+    .pane + .pane{ border-left:none; border-top:1px solid var(--border); }
+  }
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="top">
     <div>
-      <div class="title"> Physik– Credits an HardGxreJenni</div>
+      <div class="title">Physik – Credits an HardGxreJenni</div>
       <div class="stats" id="statsLine">…</div>
     </div>
     <div class="controls">
@@ -51,19 +82,26 @@
     <div class="card" id="card">
       <div class="cardHeader">
         <div id="cardMeta">Karte</div>
-        <div class="flipHint">Klick oder Leertaste: umdrehen</div>
+        <div class="flipHint">Space: Lösung an/aus · Klick auf Karte: deaktiviert</div>
       </div>
-      <div class="face" id="front">
-        <h2>Frage</h2>
-        <div class="faceText" id="frontText"></div>
+
+      <!-- NEW: always show question LEFT, answer RIGHT (hidden until button) -->
+      <div class="split">
+        <div class="pane" id="leftPane">
+          <h2>Frage</h2>
+          <div class="paneText" id="questionText"></div>
+        </div>
+        <div class="pane" id="rightPane">
+          <h2>Antwort</h2>
+          <div class="paneText" id="answerText">
+            <div class="answerPlaceholder">Klicke auf „Lösung anzeigen“.</div>
+          </div>
+        </div>
       </div>
-      <div class="face" id="back" style="display:none;">
-        <h2>Antwort</h2>
-        <div class="faceText" id="backText"></div>
-      </div>
+
       <div class="actions">
         <button class="pill" id="prevBtn">← Zurück</button>
-        <button class="pill primary" id="flipBtn">Antwort anzeigen</button>
+        <button class="pill primary" id="flipBtn">Lösung anzeigen</button>
         <button class="pill" id="nextBtn">Weiter →</button>
         <div style="flex:1"></div>
         <button class="pill ok" id="okBtn">Korrekt (K)</button>
@@ -72,7 +110,7 @@
     </div>
 
     <div class="footer">
-      <div><span class="k">Shortcuts:</span> <span class="k">←/→</span> Navigation, <span class="k">Space</span> flip, <span class="k">K</span> korrekt, <span class="k">F</span> falsch, <span class="k">S</span> Fokus Suche.</div>
+      <div><span class="k">Shortcuts:</span> <span class="k">←/→</span> Navigation, <span class="k">Space</span> Lösung an/aus, <span class="k">K</span> korrekt, <span class="k">F</span> falsch, <span class="k">S</span> Fokus Suche.</div>
       <div>Hinweis: 1 Karte = exakt 1 Frage + 1 Antwort (links/rechts im PDF). Fortschritt wird lokal im Browser gespeichert.</div>
     </div>
   </div>
@@ -82,10 +120,11 @@
 const CARDS = [{"page": 1, "idx": 1, "q": "Die Physik benutzt zur Beschreibung von Prozessen in der Natur\nspezialisierte Begriffe und Operationsregeln zum Verknüpfen\ndieser Begriffe.\nWelche grundsätzlichen Vorteile bietet diese Vorgehensweise?", "a": "–Große Mengen von Erfahrungen lassen sich so in einfache,\nüberschaubare Regeln fassen sowie quantitativ ermitteln.\n–Neue, bisher noch nicht gemachte Erfahrungen lassen sich aus\nden Regeln ableiten und in der Realität nachprüfen.\n–Die Erfahrungen lassen sich durch ein formalisiertes Begriffs-\nund Regelwerk einfach weitergeben"}, {"page": 1, "idx": 2, "q": "Nennen Sie wenigstens 3 Technische Anwendungsgebiete und die\njeweiligen physikalische Teilgebiete, die ihnen als Grundlage\ndienen.", "a": "Antriebstechnik und Flugzeugentwicklung\nThermodynamik und Strömungsphysik\nElektronik- und Computerindustrie\nFestkörperphysik bzw. der Quantenphysik\nTelekommunikation\nelektromagnetischer Wellen\nRöntgenstrahlen, Ultraschallwellen und\nKernspinresonanz\nQuantenphysik (Atom-, Kern- & Festkörperphysik)"}, {"page": 1, "idx": 3, "q": "Zählen Sie die Teilgebiete der\nklassischen Physik auf.", "a": "Fluiddynamik\nElektrodynamik\nOptik\nMechanik\nAkustik\nChaostheorie\nThermodynamik"}, {"page": 1, "idx": 4, "q": "Zählen Sie die Teilgebiete der\nmodernen Physik auf.", "a": "Quantenphysik\nAtomphysik\nKernphysik\nElementarteilchenphysik\nStatische Physik\nFestkörperphysik\nRelativitätstheorie\nAstrophysik & Kosmologie\nQuantengravitation"}, {"page": 2, "idx": 5, "q": "Der griechische Philosoph Heraklit hat als Metapher für die\nProzessualität der Natur den Spruch \"Alles fließt / Alles ist im\nFluss\" kreiiert.\nWie lautet eine Merkregel, mit der man die Prozesshaftigkeit der\nNatur zusammenfassen kann?", "a": "Alles fließt, oder wird erzeugt bzw.\nvernichtet, oder wird gespeichert."}, {"page": 2, "idx": 6, "q": "Nennen Beispiele für Prozesse in der\nPhysik, die das Konzept des Fließens\nveranschaulichen.", "a": "Luft -> Atmosphäre: Wind, Sturm\nWasser -> Ozeane: Meeresströmungen, Flüsse, Gletscher & Gletscherströme\nWärme -> Vulkanismus: Wärme strömt aus dem Inneren der Erde an die\nOberfläche, Sonne: Licht transportiert Wärme von der Sonne durchs Weltall\nzur Erde\nElektrizität -> Gewitterblitze: stammen vom Fließen der Elektrizität in der\nAtmosphäre,\nMagnetismus: wird u. A. durch elektrische Ströme erzeugt"}, {"page": 2, "idx": 7, "q": "Nenne Beispiele für Prozesse in der Physik, die das Erzeugen bzw.\nVernichten von physikalischen Größen demonstrieren.", "a": "Licht ist ein Stoff, der in der Sonne durch Emissionsprozesse\nerzeugt und auf der Erde durch Absorptionsprozesse\nvernichtet werden\nWärme ist ein Stoff, der allerdings nur erzeugt werden kann"}, {"page": 2, "idx": 8, "q": "Nenne Beispiele für Prozesse in der Physik, die das Speichern von\nphysikalischen Größen in Körpern oder Raumbereichen\nbeschreiben.", "a": "Speicherung von Wasser, Bewegung und Elektrizität in Wolken\nSpeicherung von Stoffen und Bewegung in Asche und Gasen\nbei einem Vulkanausbruch\nSpeicherung von Stoffe, Elektrizität, Wärme und Bewegung\ninnerhalb der Erde"}, {"page": 3, "idx": 9, "q": "Was bildet den Antrieb für die folgenden Prozesse:\na) Fließen von Wasser\nb) Luftströmungen\nc) Fließen von Wärme\nd) Transport von Elektrizität", "a": "a) Höhendifferenz\nb) Druckdifferenz\nc) Temperaturdifferenz\nd) Elektrische Spannung"}, {"page": 3, "idx": 10, "q": "Nennen Sie die 7 Basisgrößen des Internationalen\nEinheitensystems (SI-System) mit ihrer Bezeichnung, ihrer Einheit\nund ihrer Dimension.", "a": "Länge\nBezeichnung: s\nEinheit: m\nDimension: L\nZeit\nBezeichnung: t\nEinheit: s\nDimension: T\nMasse\nBezeichnung: m\nEinheit: kg\nDimension: M\nStromstärke\nBezeichnung: I\nEinheit: A\nDimension: I\nTemperatur\nBezeichnung: T\nEinheit: K\nDimension:\nStoffmenge\nBezeichnung: n\nEinheit: mol\nDimension: N\nLichtstärke\nBezeichnung: Iv\nEinheit: cd\nDimension: J"}, {"page": 3, "idx": 11, "q": "Die nachfolgende Abbildung soll die Ursachen für beobachtbare\nVeränderungen in der Natur auf den Transport, die Erzeugung /\nVernichtung und die Speicherung von physikalischen Größen\nzurückführen.\nErgänzen Sie in der Abbildung an den entsprechenden Stellen die\njeweiligen Größen, die transportiert, erzeugt / vernichtet und\ngespeichert werden.", "a": "Kilo\n3\nGiga\n9\nNano\n-9\nMega\n6\nMilli\n-3\nMikro\n-6\nTera\n12\nDeka\n1"}, {"page": 4, "idx": 12, "q": "Nennen Sie die sieben wichtigsten\nphysikalischen Basisgrößen", "a": "Länge\nZeit\nMasse\nStromstärke\nTemperatur\nStoffmengen\nLichtstärke"}, {"page": 4, "idx": 13, "q": "Was kennzeichnet eine physikalische\nErhaltungsgröße?", "a": "Eine mengenartige Größe X heißt Erhaltungsgröße, wenn sie\nweder erzeugt noch vernichtet werden kann."}, {"page": 4, "idx": 14, "q": "Worauf bezieht sich der Wert einer mengenartigen Größe und\nworauf der Wert einer intensiven Größe ?", "a": "mengenartige Größe: Raumbereich\nintensive Größe: Auf einen Punkt im\nRaum"}, {"page": 5, "idx": 15, "q": "Was ist eine Erhaltungsgröße und\nwelche Erhaltungsgrößen gibt es in der\nPhysik?", "a": "Eine mengenartige Größe X heißt Erhaltungsgröße, wenn sie\nweder erzeugt noch vernichtet werden kann."}, {"page": 5, "idx": 16, "q": "Nennen Sie für die sieben mengenartigen Basisgrößen X der\nPhysik die jeweiligen Stromstärken .", "a": "Volumen\nVolumenstärke\nMasse\nMassestromstärke\nelektrische Ladung\nelektrische Stromstärke\nStoffmenge\nStoffmengenstromstärke\nImpuls\nImpulsstromstärke(Kraft)\nDrehimpuls\nDrehimpulsstromstärke (Drehmoment)\nEntropie\nEntropiestromstärke\nEnergie\nEnergiestromstärke (Leistung)"}, {"page": 5, "idx": 17, "q": "Was ist der Antrieb für einen Strom IX\neiner mengenartigen Größe X?", "a": "Die Potentialdifferenz zwischen zwei\nPunkten ist der Antrieb für den Strom IX"}, {"page": 5, "idx": 18, "q": "Was ist eine Potentialgröße zu einer mengenartigen Größe X?", "a": "Potential (intensive Größe) ist notwendig, um zu verstehen,\nwas den Transport / Strom einer mengenartige Größen X\nverursacht."}, {"page": 6, "idx": 19, "q": "Erklären Sie die Begriffe intensive,\nextensive und mengenartige Größe", "a": "Intensive Größen:\nSind unabhängig von Menge der Substanz oder dem Systemvolumen. Sie\ncharakterisiert die Eigenschaften einer Substanz pro Einheit, unabhängig\ndavon, wie viel von der Substanz vorhanden ist. Bsp: Temperatur\nExtensive Größe:\nIst von der Menge der Substanz abhängig. Sie ist proportional zur Größe des\nSystems und verändert sich entsprechend, wenn die Menge der Substanz\nverändert wird. Bsp. Masse, Volumen, Energie und Anzahl der Teilchen\nMengenartige Größe:\nEine mengenartige Größe ist eine Art von extensiver Größe, da sie von der\nMenge der betrachteten Objekte abhängt."}, {"page": 6, "idx": 20, "q": "Wie lautet das verallgemeinerte Ohmsche Gesetz für den\nresistiven Transport einer mengenartigen Größe X? Erläutern Sie\ndas Gesetz mittels einer Skizze.", "a": "Spontaner Prozess: Strom folgt stets der Potentialdifferenz\nWasserfall\nGetriebener Prozess: Strom fließt entgegengesetzt zur\nPotentialdifferenz\nElektromotor"}, {"page": 6, "idx": 21, "q": "Was versteht man unter einem spontanen Prozess und was unter\neinem getriebenen Prozess?\nNennen Sie jeweils ein Beispiel für einen spontanen und einen\ngetriebenen Prozess.", "a": "Konduktiver Transport einer mengenartigen Größe X erfolgt\ndurch Materie hindurch => Leitungsartiger Transport.\nKonvektiver Transport einer mengenartigen Größe X über den\nRand eines Gebiets G erfolgt dadurch, dass die Größe X\nzusammen mit bewegter Materie transportiert wird =>\nKonvektion (Strömung)."}, {"page": 7, "idx": 22, "q": "Nennen Sie Beispiele für konduktive\nund konvektive Transportprozesse.", "a": "Konduktiv\nWärmeleitung (Ausbreitung von Wärme) ist ein\nleitungsartiger Transportprozess, der zudem immer mit\nder Produktion von Entropie S einhergeht. Wärme Q ist\nhierbei die Energie, die stets zusammen mit der\nEntropie S transportiert wird.\nKonvektive\nWärmekonvektion bei von unten erwärmten Fluidschicht"}, {"page": 7, "idx": 23, "q": "Energie kann man als Mensch nicht direkt sehen. Woran lässt sich\nerkennen, ob ein makroskopisches System viel Energie enthält.\nNennen Sie ein paar wesentliche Merkmale hierfür.", "a": "Ein System enthält viel Energie, falls es:\nsich schnell bewegt\nschnellrotiert\nheiß ist\nunter hohem Druck steht"}, {"page": 7, "idx": 24, "q": "Wie kann man am besten die Rolle der\nEnergie in der Physik\nallgemeinverständlich umschreiben?", "a": "Die meisten Aktivitäten der Menschen sind mit Mühe /Anstrengung, also mit\nEnergie verbunden. Typische Symptome sind:\nKeuchen und Schwitzen.\nDabei gilt: dass die für diese Tätigkeiten investierte Energie / Mühe nicht\nverloren geht, sondern erhalten bleibt ( <=> Energie ist eine Erhaltungsgröße)\nBeispiel: Spannen / Entspannen einer Feder\nNutze gespannte Feder um einen Baum zu biegen, einen Sack zu heben oder\neinen Stein zu schleudern.\nUmgekehrt kann eine Feder durch einen gebogenen Baum, einen fallenden\nSack oder einen geschickt aufgefangenen Stein gespannt werden.\nDie aufgewendete Energie / Mühe ist in den veränderten Objekten gespeichert\nund lässt sich aus diesen wiedergewinnen, in dem die Veränderungen\nzurückgenommen werden."}, {"page": 7, "idx": 25, "q": "Was ist in der Physik ein Energieträger?\nNennen Sie Beispiele für Energieträger.", "a": "Energieträger sind Stoffe wie Treibstoffe, Brennstoffe,\nNahrungsmittel, die Energie mit sich führen\nBenzin, Nahrung, Holz, Kohle, Gas, Elektrizität"}, {"page": 8, "idx": 26, "q": "Ein Elektromotor treibt über eine Welle ein Schwungrad an.\nSkizzieren Sie die Situation und zeichnen Sie sowohl\nEnergieträgerstrom und Energiestrom ein. Was ist hier der\nEnergieträger?", "a": "Energieträger: Drehimpuls"}, {"page": 8, "idx": 27, "q": "Woran kann man erkennen, ob durch\neine nicht rotierende Welle ein\nDrehimpulsstrom fließt?", "a": "Wenn ein Drehmoment auf die Welle\nwirkt"}, {"page": 8, "idx": 28, "q": "Fließt durch eine rotierende Welle, die\naber nicht tordiert ist, ein\nEnergiestrom?", "a": "Ja. Durch die Rotation wird eine Energie\nauf die Welle ausgeübt"}, {"page": 8, "idx": 29, "q": "Welche Bedingungen müssen erfüllt sein, damit durch eine\nrotierende Welle ein Energiestrom fließt?", "a": "Drehung der Welle\nDrehmoment liegt an der Welle an\nEs findet eine Energieübertragung statt"}, {"page": 9, "idx": 30, "q": "Erklären Sie den Unterschied zwischen Einwegflaschen – und\nMehrwegflaschen- Energieträgern anhand der jeweiligen\nEnergieflussdiagramme. Nennen Sie jeweils ein Beispiel.", "a": "Einweg\nEnergie wird von der Quelle zum Empfänger geleitet, lässt die Energie\ndort ab und verlässt den Empfänger wieder\nEs wird nur eine Leitung benötigt\nBsp. Benzintank und Automotor\nMehrweg\nEnergie wird von der Quelle zum Empfänger geleitet, lässt die Energie\ndort ab, verlässt den Empfänger wieder und kehrt zur Quelle zurück\nEs werden zwei Leitungen benötigt\nBsp. Zentralheizung -> Heizkörper"}, {"page": 9, "idx": 31, "q": "Erklären Sie die Begriffe Energieumlader und Energiespeicher und\nskizzieren Sie deren Energieflussdiagramme.", "a": "Energieumlader: System, das simultan als permanenter (!)\nEnergieempfänger und Energiequelle fungiert. Er entleert sich\nnicht bei Nutzung.\nEnergiespeicher: System, dass als Energiequelle nur einen\nbestimmten Energiebetrag zur Verfügung stellt. Er entleert\nsich bei Nutzung."}, {"page": 10, "idx": 32, "q": "Was unterscheidet Energieumlader und seine Umkehrung\nvoneinander. Erklären Sie am Beispiel der jeweiligen\nEnergieflussdiagramme.", "a": "Zu jedem Energieumlader gibt es eine Umkehrung, bei dem\nEingangs –und Ausgangs – Energieträger vertauscht sind."}, {"page": 10, "idx": 33, "q": "Nennen Sie 3 Beispiele für einen\nEnergieumlader und seine Umkehrung.", "a": "Generator <-> Motor\nPropeller <-> Windrad\nWasserpumpe <-> Wasserturbine"}, {"page": 10, "idx": 34, "q": "Kann ein Energieumlader auch seine\neigene Umkehrung sein?", "a": "Ja"}, {"page": 10, "idx": 35, "q": "Erläutern Sie wie man durch die Reihenschaltung von\nEnergieumlader und seine Umkehrung den Energietransport über\nlange Strecken realisieren kann? Welche Energieträger eignen sich\nhierfür besonders gut?", "a": "Energietransport über die Distanz mittels Elektrizität.\nEnergie wird im Generator U vom Drehimpuls auf Elektrizität\numgeladen\nmittels Elektrizität zum E – Motor (Umkehrung U – 1 )\ntransportiert und\ndort wieder auf Drehimpuls umgeladen"}, {"page": 11, "idx": 36, "q": "Wie kann man Energie in einem System speichern? Was ändert\nsich in einem System, wenn in ihm Energie gespeichert wird?", "a": "Energie lässt sich in einem System speichern, in dem dessen Zustand verändert\nwird:\n• entspannte Feder wird um Strecke s gedehnt / komprimiert: E (s) = ½ D s 2 ,\n• Körper auf eine bestimmte Geschwindigkeit v beschleunigen: E (v) = ½ m v 2 ,\n• Körper im Gravitationsfeld vom Boden auf Höhe z anheben: E (z) = m g z ,\n• Wasser in einen Gummiballon (gegen den herrschenden Druck) hineinpumpen\n• Volumen eines Gases in einem Gefäß über einen Kolben komprimieren (V1 ->\nV2):\nE = n R T ln (V1 / V2)"}, {"page": 11, "idx": 37, "q": "Wie lautet der Ausdruck für die Energie\neiner Feder (Federkonstante D)?", "a": "E (s) = ½ D s 2"}, {"page": 11, "idx": 38, "q": "Was muss man tun, damit man in einer\nSchraubenfeder Energie speichern\nkann?", "a": "Komprimierung der Feder durch externe Kraft\nHooke'sches Gesetz: Die Feder muss nach dem Hooke'schen\nGesetz gehorchen, das besagt, dass die zurückgegebene Kraft\neiner Feder proportional zur Verformung der Feder ist."}, {"page": 11, "idx": 39, "q": "Wie lautet der Ausdruck der (Rückstell-)Kraft F(s) einer Feder und\nin welchem Zusammenhang steht F(s) zur Energie E(s) einer Feder?", "a": "Rückstellkraft:"}, {"page": 12, "idx": 40, "q": "Wie ist das Potential einer mengenartigen Größe X definiert?\nIn welcher Beziehung steht das Potential zur Energie E?", "a": "Energiebeladungsmaß ( = Potential ) des Energieträgers X"}, {"page": 12, "idx": 41, "q": "Wie kann man den Begriff Potential einer mengenartigen\nGröße X am besten erklären?", "a": "bezeichnet die Potentialdifferenz zwischen Eingang und\nAusgang beim Energieempfänger oder zwischen Hin– und\nRückleitung des Energieträgerstroms."}, {"page": 12, "idx": 42, "q": "Nennen Sie Beispiele für Prozesse, bei denen Energie zur\nErzeugung von Wärme / Entropie benutzt wird?", "a": "Heizungssystem\nÖl- und Gasheizungen\nWärmepumpe\nIndustrielle Trocknungsprozesse um die Feuchtigkeit aus\nMaterialien zu entfernen"}, {"page": 12, "idx": 43, "q": "Skizzieren Sie das Energieflussdiagramm für einen realen\nverlustbehafteten\nEnergieumlader am Beispiel eines E-Motors? Was unterscheidet\ndas Energieflussdiagramm\neines realen Energieumladers von dem eines idealen\nEnergieumladers?", "a": "Wie ein normales Diagramm nur\nzusätzlich noch ein Energieaustausch\nzur Luft. (Abwärme)"}, {"page": 13, "idx": 44, "q": "Wie lautet die Gleichung für die Energiestromstärke , falls die\nEnergie E nur von\neinem Energieträger X abhängt?", "a": "Ja.\nEnergie ist das Produkt aus Masse und das Quadrat der\nLichtgeschwindigkeit. Die Lichtgeschwindigkeit bleibt immer\ngleich, daher kann nur die Masse geringer werden, wenn die\nEnergie in der Batterie abnimmt."}, {"page": 13, "idx": 45, "q": "Wie lautet der Ausdruck für die innere Energie eines\nruhenden Körpers mit der Masse m?", "a": "Dem Kupferstück werde mit dem Träger Entropie (= Wärme) die Energiemenge\nzugeführt, wodurch sich seine Temperatur um = 10 K (Kelvin)\nerhöhe.\nNach den Gesetzen der Thermodynamik ergibt sich die zugeführte\nWärmeenergiemenge\ngemäß wobei die\nspezifische Wärmekapazität bei konstantem Druck ist.\nDamit resultiert mittels Energie-Masse-Relation ( )\ndaraus eine Massenzunahme."}, {"page": 14, "idx": 46, "q": "Wie lautet die Bilanzgleichung für die Energie E? Die Energie ist\neine Erhaltungsgröße. Was bedeutet das?", "a": "In einem geschlossenen System bleibt die Summe der Energie\nimmer gleich."}, {"page": 14, "idx": 47, "q": "Wie lautet die Energie-Impuls-Beziehung E(p) für einen bewegten\nKörper (Masse m, Geschwindigkeit v, Impuls p), falls dessen\nGeschwindigkeit v viel kleiner als die Lichtgeschwindigkeit c ist?", "a": "Kinetische Energie\nDurch den oberen Teil"}, {"page": 15, "idx": 48, "q": "Eine Schraubenfeder sei mit ihrem linken Ende fest mit einer Wand verbunden.\nDas rechte Ende der Schraubenfeder sei über ein Seilstück mit einer\nMotorwinde verbunden, die über ihr Gehäuse mit dem Erdboden verankert sei.\nZu Beginn (t = 0) sei die Schraubenfeder entspannt. Anschließend (t > 0) werde\ndie Schraubenfeder über die Motorwinde um die Strecke über ihre\nRuhelänge s0 hinaus gedehnt und anschließend unter Spannung gehalten.\nWährend des Dehnprozesses bewege sich das rechte Ende der Feder mit der\nkonstanten Geschwindigkeit v > 0 nach rechts. Das linke Federende dagegen\nbleibe währenddessen in Ruhe (Geschwindigkeit v = 0).\nWie lautet der Ausdruck für die Energiestrom IE in diesem Fall?\nWieviel Energie ist in die Feder geflossen?\nHinweis: Für die Feder darf das Hookesche Gesetz (Ip(s) = D s) angenommen\nwerden.", "a": "Da die Feder unter Zugspannung steht.\nKörper absorbiert permanent Impuls p aus g-Feld, der seinerseits\nvon Erde E (Körper) kontinuierlich an das g-Feld abgegeben\n(emittiert) wird.\nÜber das Stativ in die Erde"}, {"page": 15, "idx": 49, "q": "Eine Eisenkugel (Masse m) sei über ein Schraubenfeder mit der Querstange\neines Stativs verbunden, welches mit dem Erdboden verankert sei.\nWoran erkennt man, dass ein ständiger Impulsstrom von der Eisenkugel\nausgehend durch die Schraubenfeder noch oben fließen muss?\nWoher stammt der Impuls, der aus der Eisenkugel kommend nach oben\nwegfließt?\nWohin fließt der Impuls nach dem er das obere Ende der Schraubenfeder\nerreicht hat?", "a": "Die Energie wird im Gravitationsfeld gespeichert"}, {"page": 16, "idx": 50, "q": "Eine Welle (= homogener Vollzylinder, Radius r, Länge L, Schubmodul G), dessen\nlinkes Ende fixiert sei ( = 0), werde mittels einer am rechten Ende\nbefestigten Kurbel, durch Drehen der Kurbel mit der konstanten\nWinkelgeschwindigkeit während der Zeitspanne um den\nTorsionswinkel verdrillt.\nWie lauten die Ausdrücke für den Drehimpulsstrom IL durch die Welle und den\nEnergiestrom IE in die Welle?\nWelcher Energiebetrag wurde durch das Tordieren um den Winkel\nin der Welle gespeichert?", "a": "Der Impuls p eines Objektes mit der Masse m und der\nGeschwindigkeit v ist durch das folgende kapazitive Gesetz\ngegeben:"}, {"page": 16, "idx": 51, "q": "Wie ist Größe Impuls in der klassischen\nMechanik definiert?", "a": "Gleiter 1 mit der Masse m1 bewege sich auf einer Luftkissenbahn. Es wird die\nGeschwindigkeit v1 von Gleiter 1 gemessen. Gleiter 1 stößt auf den in Ruhe\nbefindlichen Gleiter 2, welcher die Masse m2 besitzt. Beide Gleiter bewegen sich\nweiter mit derselben Geschwindigkeit v2, welche wiederum gemessen wird.\nDa die Massen der beiden Gleiter bekannt sind und die Geschwindigkeiten\ngemessen wurden ergibt sich daraus."}, {"page": 16, "idx": 52, "q": "Erläutern Sie wie man den Impuls über den total inelastischen\nStoß direkt messen kann. Verwenden Sie als Beispielszenario zwei\nGleiter auf einer Luftkissenfahrbahn.", "a": "Geschwindigkeitsdifferenz treibt\nImpulsstrom Ip an.\nEin spontaner Impulsstrom tritt immer dann auf, wenn sich der\nImpuls innerhalb eines Systems ohne äußere Einwirkungen ändert."}, {"page": 17, "idx": 53, "q": "Welche Größe fungiert als Potential für den Impuls?\nWas bildet also den Antrieb für einen Impulsstrom?", "a": "Geschwindigkeit v\nEine Kraft"}, {"page": 17, "idx": 54, "q": "Geben Sie die Bilanzgleichung für den Impuls an. Der Impuls ist\neine Erhaltunggröße in der Physik. Was bedeutet das?", "a": "In einem geschlossenen System ist die Summe der Impulse immer\ngleich"}, {"page": 17, "idx": 55, "q": "Was versteht man unter konduktivem (leitungsartigem), was unter\nkonvektivem Impulstransport und was beschreibt eine\nImpulsquelle?", "a": "Beim konduktiven (leitungsartigen) Impulstransport wird\nImpuls durch ein System, beispielsweise ein Festkörper\n(Stange, Seil, Feder, ...) hindurch geleitet.\nBeim konvektiven Transport wird Impuls zusammen mit\nbewegter Materie transportiert."}, {"page": 17, "idx": 56, "q": "Eine Person zieht über ein Seil einen Wagen nach rechts. Welche\nArt von Impuls fließt über das Seil in welche Richtung? Zeichnen\nSie außerdem den Impulsstrom in das Bild ein.", "a": "positiver Impuls\nDer Impuls geht bei allen Szenarien immer in die Richtung der\nBewegung und der Impulsstrom geht in Richtung des Objektes\nund durch den Boden zurück zur Quelle."}, {"page": 18, "idx": 57, "q": "Eine Person drückt über eine Stange einen Wagen vorwärts nach\nrechts. Welche Art von Impuls fließt über die Stange in welche\nRichtung? Zeichnen Sie außerdem den Impulsstrom in das Bild ein.", "a": "positiver Impuls\nDer Impuls geht bei allen Szenarien immer in die Richtung der\nBewegung und der Impulsstrom geht in Richtung des Objektes\nund durch den Boden zurück zur Quelle."}, {"page": 18, "idx": 58, "q": "Eine Person zieht mit konstanter Kraft von 10 N horizontal am\nrechten Ende eines Seil, dass mit seinem linken Ende an einer\nWand befestigt ist. Warum handelt es sich hierbei um einen\ngeschlossenen Impulsstromkreis? Zeichnen Sie den Impulsstrom\nin das Bild ein.", "a": "In einem geschlossenen Impulsstromkreis steht stets ein Teil\ndes Kreises unter Zugspannung und ein anderer Teil unter\nDruckspannung.\nImpulsstrom ist eine Kreis vom Menschen aus über das Seil in\ndie Wand, in den Boden, zurück zum Menschen"}, {"page": 18, "idx": 59, "q": "Betrachten Sie einen sich zwischen zwei horizontalen Federn\neingespannten Klotz, der horizontal über eine ebene Unterlage\ngleite. Der Klotz bewege sich im Moment der Betrachtung gerade\nmit der Geschwindigkeit v nach rechts. Zeichnen Sie alle\nvorkommenden Impulsströme in das Bild ein.", "a": "Vom Klotz durch die Federn in den\nBoden"}, {"page": 19, "idx": 60, "q": "Was versteht man unter einem\nKraftstoß? Wie hängen Kraftstoß und\nImpuls zusammen?", "a": "Kräfte wirken i. A. während eines endlichen (!) Zeitintervalls auf ein\nObjekt ein.\n=> Begriff des Kraftstoßes."}, {"page": 19, "idx": 61, "q": "Wie lautet der Energie-Impuls-Zusammenhang E(p) für einen\nKörper (Ruhemasse m), der sich mit der Geschwindigkeit v << c\ngeradlinig bewegt?", "a": "Da bei allen Reibungsprozessen der den Impulsstrom\nbegleitende Energiestrom zur Wärmeerzeugung eingesetzt\nwird, spricht man in diesen Fällen von dissipativen\nImpulsströmen.\nStrömungswiderstandskraft"}, {"page": 20, "idx": 62, "q": "In der nachfolgenden Abbildung sind drei unterschiedliche dissipative\nImpulsströme\ndargestellt: (a) Festkörperreibung, (b) Lineare Reibung (z. B: Stoßdämpfer) und\n(c) quadratische Reibung (z. B: Luftwiderstand).\nGeben Sie für jede der drei Situationen die sog. -F -Kennlinie, also den\nZusammenhang\nzwischen der Impulsstromstärke F und der Geschwindigkeitsdifferenz\nan.", "a": "Dies Wechselwirkung wird durch ein\nFeld vermittelt.\nZ.B. Gravitationsfeld"}, {"page": 20, "idx": 63, "q": "Erklären Sie wie zwei Körper, die keinen direkten Kontakt haben,\nüber eine räumliche Distanz Impuls austauschen können. Nennen\nSie ein Beispiel für diese Art von Impulstransport.", "a": "Impuls kommt aus g-Feld in den Körper, geht über die\nFederwaage, durch den Ständer in die Erde und von dort wieder\nins g-Feld.\nEs ist ein geschlossener Impulsstromkreis."}, {"page": 21, "idx": 64, "q": "Geben Sie ein Beispiel für eine\nwegabhängige Kraft F(s) an?", "a": "Ein Bodybuilder beim Bankdrücken"}, {"page": 21, "idx": 65, "q": "Wie lässt sich die von einer wegabhängigen Kraft an\neinem Objekt verrichtete Arbeit grafisch bestimmen?", "a": "Die verrichtete Arbeit ist der\nFlächeninhalt unter der Kraft-Weg-\nKurve im Kraft-Weg-Diagramm."}, {"page": 22, "idx": 66, "q": "Wie lautet der Ausdruck für die\npotentielle Energie einer Feder\n(Federkonstante D)?", "a": "Der Impuls von K wird auf B übertragen und von einem vertikalen\nin einen horiontalen Impuls umgewandelt. In K wird der vertikale\nImpuls in einen horizontalen Impuls umgewandelt."}, {"page": 22, "idx": 67, "q": "Geben Sie den Ausdruck für das Gravitationspotential in\nder Nähe der Erdoberfläche an", "a": "Durch die Reibung gibt es einen Impulsaustausch zwischen K und\nB. B wird hierdurch beschleunigt"}, {"page": 23, "idx": 68, "q": "Geben Sie die Gleichung für die Gravitationsfeldstärke des\nGravitationsfeldes der Erde an. Skizzieren Sie Form und Richtung\ndes Gravitationsfeldes der Erde durch geeignete Vektorpfeile.", "a": "Y-Achse ist g und X-Achse ist\nE-Funktion, fängt bei 9,81 bei\nJe größer der Abstand desto kleiner g"}, {"page": 23, "idx": 69, "q": "Geben Sie die Gleichung für den Betrag der Gravitationsfeldstärke\nfür das Gravitationsfeld der Erde an und\nskizzieren Sie den Funktionsgraphen von g(r).", "a": "Ip geht von der Feder in beide\nRichtungen in das einspannende\nBauteil."}, {"page": 24, "idx": 70, "q": "Die Feder steht unter Zugspannung. Skizzieren Sie den Weg des\nImpulses, zeichnen Sie also den Impulsstrom Ip ein.", "a": "Ip geht vom einspannende Bauteil in\ndie Feder aus beiden Richtungen."}, {"page": 25, "idx": 71, "q": "Geben Sie den Ausdruck für den Drehimpulsvektor eines Körpers\nan, der um eine feste Achse durch seinen Schwerpunkt rotiere.", "a": ", mit dem Betrag"}, {"page": 25, "idx": 72, "q": "Wie lautet der Drehimpulsvektor für\neinen Massenpunkt.", "a": "Erhaltungsgößen können weder erzeugt noch vernichtet werden"}, {"page": 26, "idx": 73, "q": "Erklären mit Hilfe der\nDrehimpulserhaltung den sog.\nPirouetten-Effekt.", "a": "Pirouetten-Effekt = Effekt der Drehimpulserhaltung, beobachtbar bei\nPirouetten von Eiskunstläufern, der auf Veränderung des\nMassenträgheitsmomentes beruht.\nPerson P auf Drehstuhl verringert durch das Anziehen der Arme ihr MTM J,\nwodurch sich wegen aus der Konstanz des Drehimpulses die\nWinkelgeschwindigkeit erhöht."}, {"page": 26, "idx": 74, "q": "Was versteht man unter einer kardanischen Aufhängung? Erklären\nSie, warum man mit einer kardanischen Aufhängung eines\nKreisels verhindern kann, dass Drehimpuls aus dem Kreiselsystem\nabfließen kann.", "a": "Die kardanische Aufhängung realisiert eine fast vollständige\nDrehimpulsisolation, d.h. einmal im System vorhandener Drehimpuls, wie\nauch immer erzeugt, kann das System nicht mehr verlassen, sofern\nReibungsprozesse keine Rolle mehr spielen.\nMan kann die äußere Halterung (Gestell) des abgebildeten Systems drehen,\nkippen und wenden wie man will, die Richtung der Kreiselachse bleibt\nimmer dieselbe.\nBetreibt man das gesamte System einer evakuierten Kammer, bleibt der\nDrehimpuls zumindest theoretisch für alle Zeiten konstant hinsichtlich\nBetrag und Richtung, sofern auch die Lager reibungsfrei sind."}, {"page": 26, "idx": 75, "q": "Gegeben seien ein Vollzylinder (Masse M, Radius R) und ein\nHohlzylinder (Masse M, Radius R) , die beide um ihre\nSymmetrieachse A rotieren. Welche der beiden Körper (Voll- bzw.\nHohlzylinder) besitzt das größere Massenträgheitsmoment bzgl.\nder Achse A?\nBegründen Sie Ihre Antwort!", "a": "Hohlzylinder\nJe größer der Abstand r der Massenverteilung, desto größer ist\ndas MTM. Deshalb gilt MTMVollzylinder < MTMHohlzylinder"}, {"page": 26, "idx": 76, "q": "Woran lässt sich erkennen, ob ein\nDrehimpulsstrom durch einen\nFestkörper / Sytem fließt?", "a": "Ein Körper, durch den ein Drehimpulsstrom fließt, wird durch\ndiesen in einem bestimmten Sinne verdrillt (tordiert), steht also\nunter Torsionsspannung."}, {"page": 27, "idx": 77, "q": "Betrachten Sie die folgende Situation. Eine Person sitzt in Ruhe mit einem\nrotierenden Schwungrad (Drehimpuls des Rades\n) auf einem Drehstuhl. Der Für den\nAnfangsdrehimpuls der Person gilt . Nun beginnt die Person\ndas Schwungrad in die Horizontale zu kippen. Zur Zeit rotiert das\nSchwungrad um die horizontal ausgerichtete Achse.\na) Welchen Drehimpuls hat die Person zur Zeit ?\nAnschließend schwenkt die Person die Achse des Rades solange bis die Achse\nvertikal nach unten weist.\nb) Welchen Drehimpuls hat die Person zur Zeit ?\nHinweis: Beachten Sie das der Drehimpuls eine Erhaltungsgröße ist, dass also\nfür den Gesamtdrehimpuls für jeden Zeitpunkt t gelten muss:", "a": "Keine Ahnung"}, {"page": 27, "idx": 78, "q": "Gegeben sei ein Schwungrad, dass in der Mitte einer langen Welle montiert sei.\nDas Schwungrad werde am linken Ende der Welle durch einen E-Motor\nangetrieben. Am rechten Ende der Welle befinde sich eine Bremse, die die\nRotation der Welle konstant abbremse. Nach einer Anlaufphase stellt sich ein\nFließgleichgewicht ein, so dass das Schwungrad mit konstanter\nWinkelgeschwindigkeit ( = const) rotiere.\nZeichnen Sie sowohl den Drehimpulsstrom als auch den Energiestrom\nein.", "a": ": Von der Erde in den Motor und durch die Welle in das\nSchwungrad und über die Bremse wieder in die Erde\n: Vom Motor durch die Welle in das Schwungrad"}, {"page": 27, "idx": 79, "q": "Gegeben sind 2 baugleiche Schwungräder, von denen zu Beginn (t = 0) das linke\nSchwungrad ruhe ( = 0) und das rechte Schwungrad mit\nkonstanter Winkelgeschwindigkeit rotiere. Beide Schwungräder verfügen\nüber eine Reibscheibe.\nAnschließend bewege die Person P das Schwungrad langsam horizontal\nnach links, so dass sich die beiden Reibscheiben von und berühren.\na) Rotiert das Schwungrad mathematisch positiv oder negativ?\nb) In welche Richtung zeigt der Drehimpulsvektor L1 von ?\nZeichnen Sie L1 in die Abbildung ein.\nc) Was passiert mit dem Drehimpuls L1 von , wenn sich die Reibscheiben\nberühren.\nd) Mit welchen Winkelgeschwindigkeiten / werden die beiden\nSchwungräder / am Ende des Vorganges rotieren, also nach dem sich\nbeide Reibscheiben berühren.", "a": "a) negativ\nb) Richtung rechts\nc) Der Drehimpuls fließt solange von S1 zu S2 bis beide die\nWinkelgeschwindigkeit angenommen haben\nd)"}, {"page": 27, "idx": 80, "q": "Gegeben sind 2 baugleiche Schwungräder, die auf einer\ngemeinsamen, gelagerten Welle mit entgegengesetztem Drehsinn\nrotieren.\na) Bestimmen Sie die beiden Drehimpulsvektoren L1 und L2.\nb) Wie groß ist der Gesamdrehimpuls LS des aus den beiden\nrotierenden Schwungrädern zusammengesetzten Systems S?", "a": "a) L1 und L2 zeigen bei positiver Drehrichtung senkrecht nach\noben. In diesem Fall aufeinander\nb) LS = 0"}, {"page": 28, "idx": 81, "q": "Gegeben sei eine vertikal ausgerichtete Welle (homogener Vollzylinder) , deren\nunteres Ende fixiert ist und deren oberes Ende um den Winkel tordiert ist.\na) Woran lässt sich erkennen, dass durch Welle ein Drehimpulsstrom IL fließt,\nobwohl die Welle nicht rotiert? Begründen Sie Ihre Antwort ausführlich.\nb) Wovon hängt die Stärke des Drehimpulsstromes IL hauptsächlich ab? Geben\nSie die Gleichung für IL für diesen Fall an.", "a": "a) Torsion des oberen Ende des Zylinders um den Torsionswinkel\n( )\n=> Drehimpulsstrom IL fließt durch Zylinder hindurch\nb)"}, {"page": 28, "idx": 82, "q": "Die nachfolgende Abbildung zeigt ein Kugellager, dessen rotierende Welle\nparallel zur y – Achse orientiert ist. Lager dienen ja bekanntlich der\nDrehimpulsisolation, verhindern also das Abfließen von Drehimpuls.\na) Rotiert die Welle mathematisch positiv oder mathematisch negativ ?\nBegründen Sie Ihre Antwort unter Verwendung der Rechte – Hand – Regel.\nb) Welche Drehimpulssorte Lx, Ly , Lz wird durch das Lager blockiert, kann also\nnicht abfließen?\nc) Welche Drehimpulssorten Lx, Ly , Lz können das Lager ungehindert\npassieren?", "a": "a) Anhand der rechten-Hand-Regel zeigt der Drehimpulsvektor in\nRichtung der y-Achse. Daher ist die Drehrichtung mathematisch\npositiv.\nb) Es werden die Drehimpulse Lx und Lz blockiert"}, {"page": 28, "idx": 83, "q": "Was fließt durch eine nicht rotierende Welle, die nicht verdrillt ist?\nKreuzen die richtigen Antworten an.\n[ ] Drehimpuls\n[ ] Energie", "a": "[ ] Drehimpuls\n[ X ] Energie"}, {"page": 28, "idx": 84, "q": "Was fließt durch eine nicht rotierende Welle, die tordiert ist?\nKreuzen die richtigen Antworten an.\n[ ] Drehimpuls\n[ ] Energie", "a": "[ X ] Drehimpuls\n[ X ] Energie"}, {"page": 29, "idx": 85, "q": "Was fließt durch eine rotierende Welle, die tordiert ist? Kreuzen\ndie richtigen Antworten an.\n[ ] Drehimpuls\n[ ] Energie", "a": "[ X ] Drehimpuls\n[ X ] Energie"}, {"page": 29, "idx": 86, "q": "Was fließt durch eine rotierende Welle, die nicht tordiert ist?\nKreuzen die richtigen Antworten an.\n[ ] Drehimpuls\n[ ] Energie", "a": "[ X ] Drehimpuls\n[ X ] Energie"}, {"page": 29, "idx": 87, "q": "Gegeben sei eine mit der Winkelgeschwindigkeit rotierende,\ntordierte Welle, durch die ein konstanter Drehimpulsstrom\nfließe. Wie lautet der Ausdruck für den Energiestrom , der\ndann durch die Welle strömt?", "a": "a) pz\nb) Im Bild grün\nc) Q\nd)"}, {"page": 30, "idx": 88, "q": "Der Motor läuft an, erhöht also seine Winkelgeschwindigkeit von\nauf den konstanten Wert .\na) Von wo nach wo fließt der Drehimpuls? Zeichnen Sie den Drehimpulsstrom IL\nin die Abbildung ein.\nb) Mit welcher Winkelgeschwindigkeit rotiert das Schwungrad?\nc) Um welchen Betrag hat die Energie des Schwungsrades\n(Massenträgheitsmoment J) nach Ende der Anlaufphase zugenommen?", "a": "a) Vom Motor zum Schwungrad\nb)\nc)"}, {"page": 30, "idx": 89, "q": "Der Motor läuft mit konstanter Winkelgeschwindigkeit .\na) Von wo nach wo fließt der Drehimpuls? Zeichnen Sie den\nDrehimpulsstrom IL in die Abbildung ein.\nb) Von wo nach wo fließt die Energie? Zeichnen Sie den\nEnergiestrom IE in die Abbildung ein.", "a": "a) Erde -> Motor -> Kompressor -> Erde -\n> Motor\nb) Vom Motor zum Generator"}];
 const STORAGE_KEY = 'bauelemente_cards_v4_progress';
 
+
 let state = {
   order: [...CARDS.keys()],
   idx: 0,
-  showAnswer: false,
+  showAnswer: false, // now means: answer shown on RIGHT or not
   filter: '',
   results: null,
   marks: {} // cardIndex -> 1 ok, -1 bad
@@ -111,8 +150,7 @@ function normalize(t){
 }
 
 function getActiveOrder(){
-  if(state.results) return state.results;
-  return state.order;
+  return state.results ? state.results : state.order;
 }
 
 function clampIndex(){
@@ -125,10 +163,9 @@ function clampIndex(){
 function render(){
   const stats = document.getElementById('statsLine');
   const meta = document.getElementById('cardMeta');
-  const front = document.getElementById('front');
-  const back = document.getElementById('back');
-  const frontText = document.getElementById('frontText');
-  const backText = document.getElementById('backText');
+
+  const questionText = document.getElementById('questionText');
+  const answerText = document.getElementById('answerText');
   const flipBtn = document.getElementById('flipBtn');
 
   const o = getActiveOrder();
@@ -143,10 +180,8 @@ function render(){
 
   if(total === 0){
     meta.textContent = 'Keine Treffer';
-    frontText.textContent = 'Keine Karte passt zur Suche.';
-    backText.textContent = '';
-    front.style.display = 'block';
-    back.style.display = 'none';
+    questionText.textContent = 'Keine Karte passt zur Suche.';
+    answerText.innerHTML = '<div class="answerPlaceholder">—</div>';
     stats.textContent = `Treffer: 0 | Gesamt: ${CARDS.length} | Korrekt: ${ok} | Falsch: ${bad}`;
     return;
   }
@@ -156,17 +191,18 @@ function render(){
   const card = CARDS[cardIndex];
 
   meta.textContent = `Karte ${state.idx+1}/${total} (PDF Seite ${card.page})`;
-  frontText.textContent = card.q;
-  backText.textContent = card.a;
 
+  // LEFT is ALWAYS question (one per card)
+  questionText.textContent = card.q;
+
+  // RIGHT is answer only if toggled on
   if(state.showAnswer){
-    front.style.display = 'none';
-    back.style.display = 'block';
-    flipBtn.textContent = 'Frage anzeigen';
+    // Use textContent to keep it safe and preserve line breaks
+    answerText.textContent = card.a;
+    flipBtn.textContent = 'Lösung ausblenden';
   } else {
-    front.style.display = 'block';
-    back.style.display = 'none';
-    flipBtn.textContent = 'Antwort anzeigen';
+    answerText.innerHTML = '<div class="answerPlaceholder">Klicke auf „Lösung anzeigen“.</div>';
+    flipBtn.textContent = 'Lösung anzeigen';
   }
 
   const m = marks[String(cardIndex)];
@@ -177,25 +213,24 @@ function render(){
   stats.textContent = `Gesamt: ${CARDS.length} | Aktive Liste: ${total} | Bewertet: ${ok+bad} (Korrekt: ${ok}, Falsch: ${bad}) | Aktuelle Karte: ${markTxt}`;
 }
 
-function flip(){
+function toggleAnswer(){
   state.showAnswer = !state.showAnswer;
   render();
 }
 
 function next(){
-  state.showAnswer = false;
+  state.showAnswer = false;   // hide answer on navigation
   state.idx++;
   render();
 }
 
 function prev(){
-  state.showAnswer = false;
+  state.showAnswer = false;   // hide answer on navigation
   state.idx--;
   render();
 }
 
 function shuffle(){
-  // Fisher-Yates
   const arr = [...CARDS.keys()];
   for(let i=arr.length-1;i>0;i--){
     const j = Math.floor(Math.random()*(i+1));
@@ -235,7 +270,6 @@ function mark(val){
   const cardIndex = o[state.idx];
   state.marks[String(cardIndex)] = val;
   saveState();
-  // stay on card, but keep answer hidden
   state.showAnswer = false;
   render();
 }
@@ -248,30 +282,26 @@ function resetProgress(){
 }
 
 // wire
-
-document.getElementById('flipBtn').addEventListener('click', flip);
-document.getElementById('nextBtn').addEventListener('click', next);
-document.getElementById('prevBtn').addEventListener('click', prev);
+document.getElementById('flipBtn').addEventListener('click', (e)=>{ e.stopPropagation(); toggleAnswer(); });
+document.getElementById('nextBtn').addEventListener('click', (e)=>{ e.stopPropagation(); next(); });
+document.getElementById('prevBtn').addEventListener('click', (e)=>{ e.stopPropagation(); prev(); });
 document.getElementById('shuffleBtn').addEventListener('click', shuffle);
-document.getElementById('okBtn').addEventListener('click', () => mark(1));
-document.getElementById('badBtn').addEventListener('click', () => mark(-1));
+document.getElementById('okBtn').addEventListener('click', (e)=>{ e.stopPropagation(); mark(1); });
+document.getElementById('badBtn').addEventListener('click', (e)=>{ e.stopPropagation(); mark(-1); });
 document.getElementById('resetBtn').addEventListener('click', resetProgress);
 
 const search = document.getElementById('search');
 search.addEventListener('input', (e)=>applySearch(e.target.value));
 
-const cardEl = document.getElementById('card');
-cardEl.addEventListener('click', (e)=>{
-  // avoid flipping when clicking buttons
-  const tag = (e.target && e.target.tagName) || '';
-  if(tag==='BUTTON' || tag==='INPUT') return;
-  flip();
-});
+// IMPORTANT CHANGE:
+// You asked for "only when clicking Lösung anzeigen" -> so we DISABLE card click flipping.
+// (You can re-enable by calling toggleAnswer() here if you ever want it.)
+// const cardEl = document.getElementById('card'); // not used for flip anymore
 
 window.addEventListener('keydown', (e)=>{
   if(e.key==='ArrowRight') { e.preventDefault(); next(); }
   else if(e.key==='ArrowLeft') { e.preventDefault(); prev(); }
-  else if(e.key===' ') { e.preventDefault(); flip(); }
+  else if(e.key===' ') { e.preventDefault(); toggleAnswer(); }
   else if(e.key==='k' || e.key==='K') { e.preventDefault(); mark(1); }
   else if(e.key==='f' || e.key==='F') { e.preventDefault(); mark(-1); }
   else if(e.key==='s' || e.key==='S') { e.preventDefault(); search.focus(); }
