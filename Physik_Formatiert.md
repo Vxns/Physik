@@ -357,7 +357,8 @@ Zu jedem Energieumlader gibt es eine Umkehrung, bei dem Eingangs –und Ausgangs
 
 ## 39. Frage: Kann ein Energieumlader auch seine eigene Umkehrung sein?
 
-**Antwort:** Ja
+**Antwort:** 
+Ja
 
 ---
 
@@ -768,3 +769,4 @@ c) (Gleichung erforderlich)
 **Antwort:**
 a) Erde -> Motor -> Kompressor -> Erde -> Motor
 b) Vom Motor zum Generator
+
