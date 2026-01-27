@@ -359,7 +359,7 @@ Zu jedem Energieumlader gibt es eine Umkehrung, bei dem Eingangs –und Ausgangs
 
 **Antwort:** 
 Ja
-
+TEST
 ---
 
 ## 40. Frage: Erläutern Sie wie man durch die Reihenschaltung von Energieumlader und seine Umkehrung den Energietransport über lange Strecken realisieren kann? Welche Energieträger eignen sich hierfür besonders gut?
@@ -769,4 +769,5 @@ c) (Gleichung erforderlich)
 **Antwort:**
 a) Erde -> Motor -> Kompressor -> Erde -> Motor
 b) Vom Motor zum Generator
+
 
